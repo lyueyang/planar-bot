@@ -11,6 +11,7 @@ TOKEN = os.environ.get('TOKEN')
 def start(update, context):
     print('')
 
+
 def begin(update, context):
     bot = context.bot
     payload = context.args
@@ -27,6 +28,17 @@ def begin(update, context):
     update.message.reply_text(text)
 
 
+def get_assignments(update, context):
+    #pull assignments from the backend
+    reply_text = "Here are your assignments!"
+    assignment_text = "assignment 1 "
+    other_assignment = "assignment 2"
+    assignment_text += other_assignment
+
+    update.message.reply_text(reply_text)
+    update.message.reply_text(assignment_text)
+
+
 def main():
     updater = Updater(TOKEN, use_context=True)
 
@@ -39,6 +51,8 @@ def main():
 
     # Make sure the deep-linking handlers occur *before* the normal /start handler.
     dp.add_handler(CommandHandler("start", start))
+
+    dp.add_handler(CommandHandler("getassignments", get_assignments))
 
     # Start the Bot
     updater.start_polling()
