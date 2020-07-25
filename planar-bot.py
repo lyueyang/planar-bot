@@ -16,13 +16,24 @@ def start(update, context):
 def begin(update, context):
     bot = context.bot
     payload = context.args
-    if len(payload) > 0:
-        text = "Congratulations! You've linked your account!"
+    text: str
 
-        # log successful links
-        user = update.message.from_user.username
-        text2 = str(user) + " " + str(datetime.datetime.now()) + " " + str(payload)
-        print(text2, file=open("botFiles/log.txt", "a"))
+    if len(payload) > 0:
+        user_id: int = update.message.from_user.id
+
+        url = 'https://planar.joels.space/planar/api/v1.0/verify_tele_token/%s/%s' % (payload, user_id)
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            json_response = response.json()
+            outcome: str = json_response['reponse']
+            if 'Successfully linked user' in outcome:
+                text = 'Successfully linked!'
+            else:
+                text = 'Linking failed, try linking again'
+
+        else:
+            text = "Failed, try linking again"
     else:
         text = "Welcome to planar bot! To start linking your account, please head to the web-app!"
 
