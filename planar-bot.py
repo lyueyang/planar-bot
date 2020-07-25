@@ -1,9 +1,10 @@
-import datetime
+from datetime import datetime, timezone
 import os
 
 import requests
-import telegram
-from telegram.ext import Updater, CommandHandler
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 TOKEN = os.environ.get('TOKEN')
 
@@ -28,15 +29,52 @@ def begin(update, context):
     update.message.reply_text(text)
 
 
-def get_assignments(update, context):
-    #pull assignments from the backend
-    reply_text = "Here are your assignments!"
-    assignment_text = "assignment 1 "
-    other_assignment = "assignment 2"
-    assignment_text += other_assignment
+def utc_to_local(ts: float) -> datetime:
+    return datetime.utcfromtimestamp(ts).replace(tzinfo=timezone.utc).astimezone(tz=None)
 
-    update.message.reply_text(reply_text)
-    update.message.reply_text(assignment_text)
+
+def get_assignments(update, context):
+    user_id: int = update.message.from_user.id
+    modules_response = requests.get('https://planar.joels.space/planar/api/v1.0/tele/%s/modules' % user_id)
+
+    keyboard: list = []
+
+    for module in modules_response.json()['subjects']:
+        module_name = list(module.values())[0]
+        keyboard.append([InlineKeyboardButton(module_name, callback_data=module_name), ])
+
+    update.message.reply_text('Please choose which module to check for: ', reply_markup=InlineKeyboardMarkup(keyboard))
+
+
+def module_button(update, context):
+    query = update.callback_query
+    query.answer()
+
+    output: str
+
+    user_id: int = update.callback_query.from_user.id
+    mod: str = query.data
+    url: str = 'https://planar.joels.space/planar/api/v1.0/tele/%s/assignments/%s' % (user_id, mod)
+
+    response = requests.get(url)
+    if response.status_code == 200:
+        json_response: dict = response.json()
+        output = '<b>You have %s assignments for %s:\n\n</b>' % (len(json_response), mod)
+
+        index: int = 1
+        for value in json_response.values():
+            text_list = list(value['content'].values())
+            output += '%s. %s' % (str(index), text_list[0])
+            if value['date'] is not None:
+                output += '  (Due on: %s)' % utc_to_local(value['date']).date()
+
+            output += '\n'
+            index += 1
+
+    else:
+        output = 'Sorry, I\'m having some trouble fetching your assignments'
+
+    update.effective_message.reply_html(output)
 
 
 def main():
@@ -51,8 +89,8 @@ def main():
 
     # Make sure the deep-linking handlers occur *before* the normal /start handler.
     dp.add_handler(CommandHandler("start", start))
-
-    dp.add_handler(CommandHandler("getassignments", get_assignments))
+    dp.add_handler(CommandHandler("getassignments", get_assignments, pass_args=True))
+    updater.dispatcher.add_handler(CallbackQueryHandler(module_button))
 
     # Start the Bot
     updater.start_polling()
