@@ -14,14 +14,13 @@ def start(update, context):
 
 
 def begin(update, context):
-    bot = context.bot
     payload = context.args
     text: str
 
     if len(payload) > 0:
         user_id: int = update.message.from_user.id
 
-        url = 'https://planar.joels.space/planar/api/v1.0/verify_tele_token/%s/%s' % (payload, user_id)
+        url = 'https://planar.joels.space/planar/api/v1.0/verify_tele_token/%s/%s' % (payload[0], user_id)
         response = requests.get(url)
 
         if response.status_code == 200:
