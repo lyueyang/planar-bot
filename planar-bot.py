@@ -49,7 +49,7 @@ def get_assignments(update, context):
 
     keyboard: list = []
 
-    for module in modules_response.json()['subjects']:
+    for module in modules_response.json():
         module_name = list(module.values())[0]
         keyboard.append([InlineKeyboardButton(module_name, callback_data=module_name), ])
 
@@ -73,10 +73,10 @@ def module_button(update, context):
 
         index: int = 1
         for value in json_response.values():
-            text_list = list(value['content'].values())
+            text_list = list(value.values())
             output += '%s. %s' % (str(index), text_list[0])
-            if value['date'] is not None:
-                output += '  (Due on: %s)' % utc_to_local(value['date']).date()
+            if text_list[2] is not None:
+                output += '  (Due on: %s)' % utc_to_local(text_list[2]).date()
 
             output += '\n'
             index += 1
