@@ -75,7 +75,7 @@ def module_button(update, context):
         for value in json_response.values():
             text_list = list(value.values())
             output += '%s. %s' % (str(index), text_list[0])
-            if text_list[2] is not None:
+            if text_list[2] != 0:
                 output += '  (Due on: %s)' % (utc_to_local(text_list[2]).date() + timedelta(days=1))
 
             output += '\n'
