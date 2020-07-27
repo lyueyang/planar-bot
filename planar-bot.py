@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import os
 
 import requests
@@ -76,7 +76,7 @@ def module_button(update, context):
             text_list = list(value.values())
             output += '%s. %s' % (str(index), text_list[0])
             if text_list[2] is not None:
-                output += '  (Due on: %s)' % utc_to_local(text_list[2]).date()
+                output += '  (Due on: %s)' % (utc_to_local(text_list[2]).date() + timedelta(days=1))
 
             output += '\n'
             index += 1
